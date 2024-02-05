@@ -13,6 +13,8 @@ app.use(session({
     saveUninitialized: false
 }));
 
+app.use(passport.initialize());
+app.use(passport.session());
 // 3. Define application end-points
 app.get("/", (req, res) => {
     res.send(" Lets build a Unified Digital Identity <br/><br/><a href='/login'> Affinidi Login</a>");
@@ -22,13 +24,15 @@ app.get('/login',
     function (req, res, next) {
         next();
     },
+    passport.authenticate('affinidi-login',{scope:'openid'})
 );
 
 app.get('/login/callback', (req, res, next) => {})
 
 app.get("/protected", (req, res) => {
+    passport.authenticate('affinidi-login', {successRedirect: '/protected', failureRedirect: '/'})(req,res,next)
     res.header("Content-Type", 'application/json');
-    res.end("Protected Content for Authenticated Users");
+    res.end("SON.stringify(req.user, null, 4)");
 })
 
 // 4. Start the http server
