@@ -36,3 +36,30 @@ const httpServer = http.createServer(app)
 httpServer.listen(8080, () => {
     console.log(`Hello World - Affinidi Login : Up and running on 8080`)
 })
+// 5. Integrate Authentication
+// 5a. Discover Affinidi Login - Issuer
+Issuer.discover(process.env.issuer).then(function (oidcIssuer) {
+    // 5b. Create a RP-client which can initiate an OIDC flow
+    var client = new oidcIssuer.Client({
+      client_id: process.env.client_id,
+      client_secret: process.env.client_secret,
+      redirect_uris: ["http://localhost:8080/login/callback"],
+      response_types: ['code'],
+      token_endpoint_auth_method: 'client_secret_post'
+    });
+  
+    // 5c. Provide this strategy to the passport middleware
+    passport.use(
+      'affinidi-login', new Strategy({ client, passReqToCallback: true }, (req, tokenSet, userinfo, done) => {
+        req.session.tokenSet = tokenSet;
+        req.session.userinfo = userinfo;
+        return done(null, tokenSet.claims());
+      }));
+  });
+  
+  passport.serializeUser(function (user, done) {
+    done(null, user);
+  });
+  passport.deserializeUser(function (user, done) {
+    done(null, user);
+  });
